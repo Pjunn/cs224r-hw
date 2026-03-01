@@ -56,8 +56,16 @@ def build_mlp(
 
     # TODO: return a MLP. This should be an instance of nn.Module
     # Note: nn.Sequential is an instance of nn.Module.
-    
-    raise NotImplementedError
+    input_layer = nn.Sequential(nn.Linear(input_size, size), activation)
+    output_layer = nn.Sequential(nn.Linear(size, output_size), output_activation)
+    hidden_layer = nn.Sequential(*[nn.Sequential(nn.Linear(size, size), activation) for _ in range(n_layers)])
+
+    MLP = nn.Sequential(
+        input_layer,
+        hidden_layer,
+        output_layer
+    )
+    return MLP
 
 def init_gpu(use_gpu=True, gpu_id=0):
     global device

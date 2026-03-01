@@ -50,7 +50,7 @@ class ReplayBuffer():
         self.terminals = None
 
     def __len__(self):
-        if self.obs:
+        if self.obs is not None:
             return self.obs.shape[0]
         else:
             return 0
@@ -127,8 +127,15 @@ class ReplayBuffer():
         ## (i.e., not different indices from each array)
         ## HINT 3: look at the sample_recent_data function below
         ## Note that rews, next_obs, and terminals are not used for BC
+        indices = np.random.permutation(len(self))[-batch_size:]
 
-        raise NotImplementedError
+        return (
+            self.obs[indices],
+            self.acs[indices],
+            self.rews[indices],
+            self.next_obs[indices],
+            self.terminals[indices],
+        )
     
     def sample_recent_data(self, batch_size=1):
         """

@@ -6,6 +6,7 @@ Functions to edit:
     2. sample_trajectories (line 67)
     3. sample_n_trajectories (line 83)
 """
+# from nt import times
 import numpy as np
 import time
 
@@ -25,7 +26,7 @@ def sample_trajectory(env, policy, max_path_length, render=False):
     :render: whether to save images from the rollout
     """
     # Initialize environment for the beginning of a new rollout
-    ob = TODO # HINT: should be the output of resetting the env
+    ob = env.reset() # HINT: should be the output of resetting the env
 
     # Initialize data storage for across the trajectory
     # You'll mainly be concerned with: obs (list of observations), acs (list of actions)
@@ -45,7 +46,7 @@ def sample_trajectory(env, policy, max_path_length, render=False):
 
         # Use the most recent observation to decide what to do
         obs.append(ob)
-        ac = TODO # HINT: Query the policy's get_action function
+        ac = policy.get_action(np.array(obs)) # HINT: Query the policy's get_action function
         ac = ac[0]
         acs.append(ac)
 
@@ -59,7 +60,7 @@ def sample_trajectory(env, policy, max_path_length, render=False):
 
         # TODO end the rollout if the rollout ended
         # HINT: rollout can end due to done, or due to max_path_length
-        rollout_done = TODO # HINT: this is either 0 or 1
+        rollout_done = 1 if done or steps == max_path_length else 0 # HINT: this is either 0 or 1
         terminals.append(rollout_done)
 
         if rollout_done:
@@ -80,7 +81,9 @@ def sample_trajectories(env, policy, min_timesteps_per_batch, max_path_length, r
     while timesteps_this_batch < min_timesteps_per_batch:
 
         # TODO
-        pass
+        path = sample_trajectory(env, policy, max_path_length, render)
+        paths.append(path)
+        timesteps_this_batch += get_pathlength(path)
 
     return paths, timesteps_this_batch
 
@@ -93,7 +96,9 @@ def sample_n_trajectories(env, policy, ntraj, max_path_length, render=False):
     """
     paths = []
         
-    TODO
+    for _ in range(ntraj):
+        path = sample_trajectory(env, policy, max_path_length, render)
+        paths.append(path)
 
     return paths
 
