@@ -125,9 +125,9 @@ class MLPPolicySL(BasePolicy, nn.Module, metaclass=abc.ABCMeta):
         # return more flexible objects, such as a
         # `torch.distributions.Distribution` object. It's up to you!
         mean = self.mean_net(observation)
-        std = F.softplus(self.logstd)
-        action_distribution = distributions.normal.Normal(mean, std)
-
+        std = torch.exp(self.logstd)
+        # action_distribution = distributions.normal.Normal(mean, std)
+        action_distribution = distributions.multivariate_normal.MultivariateNormal(mean, torch.diag_embed(std**2))
         return action_distribution
 
     def update(self, observations, actions):
