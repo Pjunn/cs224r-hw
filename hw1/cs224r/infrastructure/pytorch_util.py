@@ -31,7 +31,7 @@ def build_mlp(
         output_size: int,
         n_layers: int,
         size: int,
-        activation: Activation = 'leaky_relu',
+        activation: Activation = 'tanh',
         output_activation: Activation = 'identity',
 ) -> nn.Module:
     """

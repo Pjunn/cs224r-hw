@@ -46,7 +46,7 @@ def sample_trajectory(env, policy, max_path_length, render=False):
 
         # Use the most recent observation to decide what to do
         obs.append(ob)
-        ac = policy.get_action(np.array(obs)) # HINT: Query the policy's get_action function
+        ac = policy.get_action(ob) # HINT: Query the policy's get_action function
         ac = ac[0]
         acs.append(ac)
 

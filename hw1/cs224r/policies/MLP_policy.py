@@ -126,8 +126,9 @@ class MLPPolicySL(BasePolicy, nn.Module, metaclass=abc.ABCMeta):
         # `torch.distributions.Distribution` object. It's up to you!
         mean = self.mean_net(observation)
         std = torch.exp(self.logstd)
-        # action_distribution = distributions.normal.Normal(mean, std)
-        action_distribution = distributions.multivariate_normal.MultivariateNormal(mean, torch.diag_embed(std**2))
+        action_distribution = distributions.normal.Normal(mean, std)
+        # dist = distributions.independent.Independent(action_distribution, 1)
+        # action_distribution = distributions.multivariate_normal.MultivariateNormal(mean, torch.diag_embed(std**2))
         return action_distribution
 
     def update(self, observations, actions):
