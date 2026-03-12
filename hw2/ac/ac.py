@@ -117,8 +117,26 @@ class ACAgent:
             batch, self.device)
 
         ### YOUR CODE HERE ###
-
-
+        next_action = self.actor(next_obs).sample(clip=self.stddev_clip) # 1. sample next action
+        # 2. compute bellman target
+        # 2.1. get target critic value and randomize
+        target_critic = self.critic_target(next_obs, next_action)
+        random.shuffle(target_critic)
+        # 2.2. compute bellman target
+        self.critic_target.requires_grad_(False)
+        bellman_target = reward + discount * torch.min(target_critic[0], target_critic[1])
+        # 3. compute loss
+        l2_norm = [(critic - bellman_target) ** 2 for critic in self.critic(obs, action)]
+        loss = sum(l2_norm)
+        loss = loss.mean()
+        # 4. take gradient step
+        self.critic_opt.zero_grad()
+        loss.backward()
+        self.critic_opt.step()
+        
+        metrics.update({"critic_loss": loss})
+        # 5. update target critic network
+        utils.soft_update_params(self.critic, self.critic_target, self.critic_target_tau)
         #####################
         return metrics
 
@@ -151,8 +169,17 @@ class ACAgent:
             batch, self.device)
 
         ### YOUR CODE HERE ###
+        action = self.actor(obs).sample(clip=self.stddev_clip)
+        critic = self.critic(obs, action)
 
+        num_critic = len(critic)
+        loss = - sum(critic) / num_critic 
+        loss = loss.mean()
+        self.actor_opt.zero_grad()
+        loss.backward()
+        self.actor_opt.step()
 
+        metrics.update({"actor_loss": loss})
         return metrics
 
     def bc(self, replay_iter):
@@ -184,6 +211,14 @@ class ACAgent:
         obs, action, _, _, _ = utils.to_torch(batch, self.device)
 
         ### YOUR CODE HERE ###
+        dist = self.actor(obs)
+        loss = - dist.log_prob(action)
+        loss = loss.mean()
 
+        self.actor_opt.zero_grad()
+        loss.backward()
+        self.actor_opt.step()
+        
+        metrics.update({"bc_loss": loss})
 
         return metrics
