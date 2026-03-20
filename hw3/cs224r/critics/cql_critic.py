@@ -84,7 +84,12 @@ class CQLCritic(BaseCritic):
         # Hint: After calculating cql_loss, augment the loss appropriately
         
         ### YOUR CODE START HERE ###
-        loss = None
+        dqn_loss, qa_t_values, q_t_values = self.dqn_loss(ob_no, ac_na, next_ob_no, reward_n, terminal_n)
+        q_t_logsumexp = torch.logsumexp(qa_t_values, 1)
+        cql_loss = q_t_logsumexp - q_t_values
+        cql_loss = cql_loss.mean()
+        dqn_loss = dqn_loss.mean()
+        loss = dqn_loss + self.cql_alpha * cql_loss
         ### YOUR CODE END HERE ###
         self.optimizer.zero_grad()
         loss.backward()
@@ -93,9 +98,9 @@ class CQLCritic(BaseCritic):
         
         info = {'Training Loss': ptu.to_numpy(loss)}
         # TODO: Uncomment these lines after implementing CQL
-        # info['CQL Loss'] = ptu.to_numpy(cql_loss)
-        # info['Data q-values'] = ptu.to_numpy(q_t_values).mean()
-        # info['OOD q-values'] = ptu.to_numpy(q_t_logsumexp).mean()
+        info['CQL Loss'] = ptu.to_numpy(cql_loss)
+        info['Data q-values'] = ptu.to_numpy(q_t_values).mean()
+        info['OOD q-values'] = ptu.to_numpy(q_t_logsumexp).mean()
         
         self.learning_rate_scheduler.step()
 

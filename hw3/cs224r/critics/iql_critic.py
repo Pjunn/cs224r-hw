@@ -46,7 +46,8 @@ class IQLCritic(BaseCritic):
         # HINT: see Q_net definition above and optimizer below
         # HINT: Define using same hparams as Q_net, but adjust output dimensions
         ### YOUR CODE START HERE ###
-        self.v_net = None
+        self.v_net = network_initializer(self.ob_dim, 1) # TODO q function은 action dim 만큼  , value func 는 전체 액션에 대한것이니까 1?
+        self.v_net.to(ptu.device)
         ### YOUR CODE END HERE ###
 
         self.v_optimizer = self.optimizer_spec.constructor(
@@ -83,7 +84,8 @@ class IQLCritic(BaseCritic):
         # HINT: Use self.expectile_loss as defined above, 
         # passing in the difference between the computed targets and predictions
         ### YOUR CODE START HERE ###
-        value_loss = None
+        value_loss = self.expectile_loss(self.q_net_target(ob_no).gather(1, ac_na.unsqueeze(1)) - self.v_net(ob_no))
+        value_loss = value_loss.mean()
         ### YOUR CODE END HERE ###
         
 
@@ -113,7 +115,9 @@ class IQLCritic(BaseCritic):
         # HINT: Note that if the next state is terminal, 
         # its target reward value needs to be adjusted.
         ### YOUR CODE START HERE ###
-        loss = None
+        target = reward_n + self.gamma * (1 - terminal_n) * self.v_net(next_ob_no).squeeze(1)
+        pred = self.q_net(ob_no).gather(1, ac_na.unsqueeze(1)).squeeze(1)
+        loss = self.mse_loss(target, pred)
         ### YOUR CODE END HERE ###
         self.optimizer.zero_grad()
         loss.backward()
