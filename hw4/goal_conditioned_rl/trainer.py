@@ -49,22 +49,25 @@ def update_replay_buffer(
         if her_type == HERType.FINAL:
             # relabel episode based on final state in episode
             # Hint: Make sure you utilize .copy() to copy numpy arrays whenever needed. 
-            pass
+            # pass
 
             # get final goal
-
+            _, _, _, final_state, _ = episode_experience[-1]
             # compute new reward
             # Hint: You can use env_reward_func to compute this. This is
             # a passed in argument. Info for this variable can be found in
             # the function description Args section.
-
+            relabel_reward = env_reward_function(state, final_state)
             # add to buffer
-
+            replay_buffer.add(np.append(state, final_state),
+                          action,
+                          relabel_reward,
+                          np.append(next_state, final_state))
         elif her_type == HERType.FUTURE:
             # future: relabel episode based on randomly sampled future state.
             # At each timestep t, relabel the goal with a randomly selected
             # timestep between t and the end of the episode
-            pass
+            # pass
 
             # for every transition, add num_relabeled transitions to the buffer
 
@@ -73,23 +76,37 @@ def update_replay_buffer(
             # 'len(episode_experience)' steps during this episode.
             # Hint 2: You can use np.random.randint to get a random integer without
             # any additional imports.
+            if timestep == len(episode_experience):
+                break
+            sample_num = np.random.randint(low=timestep, high=len(episode_experience), size=num_relabeled)
 
+            for i in sample_num:
+                _, _, _, future_state, _ = episode_experience[i]
             # compute new reward
-
+                relabel_reward = env_reward_function(state, future_state)
             # add to replay buffer
+                replay_buffer.add(np.append(state, future_state),
+                          action,
+                          relabel_reward,
+                          np.append(next_state, future_state))
 
         elif her_type == HERType.RANDOM:
             # random: relabel episode based on a random state from the episode
-            pass
+            # pass
 
             # for every transition, add num_relabeled transitions to the buffer
 
             # get random goal
-
+            sample_num = np.random.randint(low=0, high=len(episode_experience), size=num_relabeled)
+            for i in sample_num:
+                _, _, _, random_state, _ = episode_experience[i]
             # compute new reward
-
+                relabel_reward = env_reward_function(state, random_state)
             # add to replay buffer
-
+                replay_buffer.add(np.append(state, random_state),
+                          action,
+                          relabel_reward,
+                          np.append(next_state, random_state))
         # ========================      END TODO       ========================
 
 def train(

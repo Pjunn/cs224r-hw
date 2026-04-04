@@ -35,11 +35,13 @@ def run_episode(
     for _ in range(steps_per_episode):
 
         # ======================== TODO modify code ========================
-        pass
+        # pass
+        
 
         # append goal state to input, and prepare for feeding to the q-network
         # Hint: state and goal_state are 1d numpy arrays of size (N,). After being
         # combined, you should have a 1d numpy array of size (2*N,)
+        q_input = np.concatenate((state, goal_state), axis=0)
 
         # forward pass to find action
         # Hint 1: Remember that you need to pass a torch tensor into your Q Network that
@@ -47,23 +49,33 @@ def run_episode(
         # Hint 2: Remember that Q Networks return an array with size equal to the action space
         # such that each value represents the estimated value for taking that action. You
         # want to GREEDILY select the action based on these estimated values.
+        q_input = torch.from_numpy(q_input.astype(np.float32)).unsqueeze(0) # (1, 2*N)
+        q_values = q_net(q_input)
+        q_action = int(torch.argmax(q_values))
 
         # take action, use env.step
         # Hint: Remember that env.step is going to return a tuple
         # (next_state, reward_this_step, done, info) where info is a dict
+        next_state, reward_this_step, done, info = env.step(q_action)
 
         # add transition to episode_experience as a tuple of
         # (state, action, reward, next_state, goal)
+        transition = (state, q_action, reward_this_step, next_state, goal_state)
+        episode_experience.append(transition)
 
         # update episodic return
+        episodic_return = reward_this_step
 
         # update state
+        state = next_state
 
         # update succeeded bool from the info returned by env.step
         # Hint: Use the key 'successful_this_state' from the info dictionary
-
+        succeeded = info['successful_this_state']
+        
         # break the episode if done=True
-
+        if done == True:
+            break
         # ========================      END TODO       ========================
 
     return episode_experience, episodic_return, succeeded
