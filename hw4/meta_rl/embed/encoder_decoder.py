@@ -80,8 +80,8 @@ class EncoderDecoder(Embedder, relabel.RewardLabeler):
         padded_transitions = nn.utils.rnn.pack_padded_sequence(
                 transition_embed.reshape(mask.shape[0], mask.shape[1], -1),
                 sequence_lengths, batch_first=True, enforce_sorted=False)
-        if torch.cuda.is_available():
-            torch.set_default_tensor_type(torch.cuda.FloatTensor)
+        # if torch.cuda.is_available():
+        #     torch.set_default_tensor_type(torch.cuda.FloatTensor)
 
         transition_hidden_states = self._transition_lstm(padded_transitions)[0]
         # (batch_size, max_len, hidden_dim)
@@ -160,6 +160,7 @@ class EncoderDecoder(Embedder, relabel.RewardLabeler):
         # Hint 3: Reminder that we want to use stop_gradient(z). The torch.tensor.detach 
         # function may be helpful.
         #
+        decoder_context_loss = torch.norm(all_decoder_embeddings - id_embeddings.detach().unsqueeze(1), dim=2) ** 2
         # You may not need to use all of the parameters passed to this function.
         #
         # Parts of the decoder_context_loss are masked below for you to handle
@@ -255,6 +256,8 @@ class EncoderDecoder(Embedder, relabel.RewardLabeler):
         # Hint 4: Reminder that we want to use stop_gradient(z). The torch.tensor.detach 
         # function may be helpful.
         #
+        distances = torch.norm(all_decoder_embeddings - id_embeddings.detach().unsqueeze(1), dim=2) ** 2
+        rewards = -(distances[:, 1:] - distances[:, :-1])
         # The rewards are subsequently masked, to handle batches of episodes
         # with different lengths, but this is done for you, and you should not
         # have to handle masking.
