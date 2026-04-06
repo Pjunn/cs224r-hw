@@ -155,7 +155,7 @@ class BCTrainer:
             self.total_envsteps += envsteps_this_batch
 
             # Relabel the collected observations with actions from a provided expert policy
-            if relabel_with_expert and itr>=start_relabel_with_expert:
+            if relabel_with_expert and itr>=start_relabel_with_expert: # TODO 이렇게 되면 batch_size expert data 보다 클때 itr == 0에서 데이터 relable 안됨
                 # HW1: implement this function below
                 paths = self.do_relabel_with_expert(expert_policy, paths)
 
@@ -206,7 +206,28 @@ class BCTrainer:
         # HINT4: You want each of these collected rollouts to be of length self.params['ep_len']
 
         print("\nCollecting data to be used for training...")
-        paths, envsteps_this_batch = TODO
+
+
+        if itr == 0:
+            with open(load_initial_expertdata, 'rb') as f:
+                data = pickle.load(f)
+                # 지금 데이터의 path length 는 1000인데 만약 batch_size 가 이거보다 커질 경우 처리해줘야함. 
+                envsteps_this_batch = 0
+                data_idx = 0
+                paths = []
+                while envsteps_this_batch < self.params['batch_size'] and data_idx < len(data):
+                    paths.append(data[data_idx])
+                    envsteps_this_batch += utils.get_pathlength(data[data_idx])
+                    data_idx += 1
+
+                # if envsteps_this_batch < self.params['batch_size']: # expert data 부족 
+                #     extra_paths, extra_envsteps_this_batch = utils.sample_trajectories(self.env,
+                #         collect_policy, self.params['batch_size'] - envsteps_this_batch, self.params['ep_len'])
+                #     paths += extra_paths
+                #     envsteps_this_batch += extra_envsteps_this_batch
+        else:
+            paths, envsteps_this_batch = utils.sample_trajectories(self.env,
+                collect_policy, self.params['batch_size'], self.params['ep_len'])
 
         # collect more rollouts with the same policy, to be saved as videos in tensorboard
         # note: here, we collect MAX_NVIDEO rollouts, each of length MAX_VIDEO_LEN
@@ -230,12 +251,12 @@ class BCTrainer:
             # TODO sample some data from the data buffer
             # HINT1: use the agent's sample function
             # HINT2: how much data = self.params['train_batch_size']
-            ob_batch, ac_batch, re_batch, next_ob_batch, terminal_batch = TODO
+            ob_batch, ac_batch, re_batch, next_ob_batch, terminal_batch = self.agent.sample(self.params['train_batch_size'])
 
             # TODO use the sampled data to train an agent
             # HINT: use the agent's train function
             # HINT: keep the agent's training log for debugging
-            train_log = TODO
+            train_log = self.agent.train(ob_batch, ac_batch)
             all_logs.append(train_log)
         return all_logs
 
@@ -252,8 +273,11 @@ class BCTrainer:
         # TODO relabel collected obsevations (from our policy) with labels from an expert policy
         # HINT: query the policy (using the get_action function) with paths[i]["observation"]
         # and replace paths[i]["action"] with these expert labels
+        for i in range(len(paths)):
+            paths[i]["action"] = expert_policy.get_action(paths[i]["observation"])
 
-        raise NotImplementedError
+
+        return paths
 
     ####################################
     ####################################
